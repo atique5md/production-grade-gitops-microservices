@@ -26,6 +26,51 @@ resources:
  - productcatalogservice.yaml
  - recommendationservice.yaml
  - shippingservice.yaml
+
+images:
+  - name: adservice
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/adservice
+    newTag: latest
+
+  - name: cartservice
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/cartservice
+    newTag: latest
+
+  - name: checkoutservice
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/checkoutservice
+    newTag: latest
+
+  - name: currencyservice
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/currencyservice
+    newTag: latest
+
+  - name: emailservice
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/emailservice
+    newTag: latest
+
+  - name: frontend
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/frontend
+    newTag: latest
+
+  - name: loadgenerator
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/loadgenerator
+    newTag: latest
+
+  - name: paymentservice
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/paymentservice
+    newTag: latest
+
+  - name: productcatalogservice
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/productcatalogservice
+    newTag: latest
+
+  - name: recommendationservice
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/recommendationservice
+    newTag: latest
+
+  - name: shippingservice
+    newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/shippingservice
+    newTag: latest
 # components:
 # - ../kustomize/components/cymbal-branding
 # - ../kustomize/components/google-cloud-operations
