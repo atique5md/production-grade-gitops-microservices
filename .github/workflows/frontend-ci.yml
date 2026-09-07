@@ -1,4 +1,4 @@
-name: Frontend CI
+name: Frontend CI/CD
 
 on:
   push:
@@ -15,22 +15,39 @@ on:
       - "src/frontend/**"
       - ".github/workflows/frontend-ci.yml"
 
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: production-grade-gitops/frontend
+
 jobs:
-  build:
-    name: Build Frontend
+  build-and-push:
+    name: Build and Push Frontend
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::703707151858:role/production-grade-gitops-github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Build frontend image
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push frontend image
         uses: docker/build-push-action@v6
         with:
           context: ./src/frontend
           file: ./src/frontend/Dockerfile
-          push: false
-          tags: frontend:ci
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
