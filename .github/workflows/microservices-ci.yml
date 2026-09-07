@@ -1,5 +1,9 @@
 name: Microservices CI/CD
 
+concurrency:
+  group: microservices-ci-${{ github.ref }}
+  cancel-in-progress: false
+
 on:
   push:
     branches: [main]
@@ -122,6 +126,10 @@ jobs:
     needs: [detect-changes, build-and-push]
     if: needs.detect-changes.outputs.services != '[]'
     runs-on: ubuntu-latest
+
+    concurrency:
+      group: gitops-update-${{ github.ref }}
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
