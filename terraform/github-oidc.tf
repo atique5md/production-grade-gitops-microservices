@@ -31,7 +31,7 @@ resource "aws_iam_role" "github_actions" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = "repo:atique5md/production-grade-gitops-microservices:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = "repo:atique5md@207262451/production-grade-gitops-microservices@1358097460:ref:refs/heads/main"
           }
         }
       }
