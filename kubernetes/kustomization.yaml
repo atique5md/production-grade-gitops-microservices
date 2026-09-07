@@ -26,6 +26,7 @@ resources:
  - productcatalogservice.yaml
  - recommendationservice.yaml
  - shippingservice.yaml
+ - frontend-hpa.yaml
 
 images:
   - name: adservice
