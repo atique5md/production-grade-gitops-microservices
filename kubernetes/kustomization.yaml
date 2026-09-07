@@ -50,7 +50,7 @@ images:
 
   - name: frontend
     newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/frontend
-    newTag: latest
+    newTag: 23ebe945c37ea8271bbdbf35ec3a7e972b8e5b0b
 
   - name: loadgenerator
     newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/loadgenerator
