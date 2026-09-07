@@ -1,0 +1,158 @@
+name: Microservices CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - ".github/workflows/microservices-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - ".github/workflows/microservices-ci.yml"
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REGISTRY: 703707151858.dkr.ecr.ap-south-1.amazonaws.com
+  ECR_PREFIX: production-grade-gitops
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.detect.outputs.services }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed services
+        id: detect
+        shell: bash
+        run: |
+          set -e
+
+          changed_files=$(git diff --name-only \
+            "${{ github.event.before }}" \
+            "${{ github.sha }}")
+
+          services=()
+
+          for service in \
+            adservice \
+            cartservice \
+            checkoutservice \
+            currencyservice \
+            emailservice \
+            frontend \
+            loadgenerator \
+            paymentservice \
+            productcatalogservice \
+            recommendationservice \
+            shippingservice
+          do
+            if echo "$changed_files" | grep -q "^src/$service/"; then
+              services+=("$service")
+            fi
+          done
+
+          if [ ${#services[@]} -eq 0 ]; then
+            echo 'services=[]' >> "$GITHUB_OUTPUT"
+          else
+            json=$(printf '%s\n' "${services[@]}" | jq -R . | jq -sc .)
+            echo "services=$json" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "Changed services:"
+          printf '%s\n' "${services[@]}"
+
+  build-and-push:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.detect-changes.outputs.services) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::703707151858:role/production-grade-gitops-github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set Docker build context
+        id: docker
+        shell: bash
+        run: |
+          if [ "${{ matrix.service }}" = "cartservice" ]; then
+            echo "context=./src/cartservice/src" >> "$GITHUB_OUTPUT"
+            echo "file=./src/cartservice/src/Dockerfile" >> "$GITHUB_OUTPUT"
+          else
+            echo "context=./src/${{ matrix.service }}" >> "$GITHUB_OUTPUT"
+            echo "file=./src/${{ matrix.service }}/Dockerfile" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ steps.docker.outputs.context }}
+          file: ${{ steps.docker.outputs.file }}
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.service }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.service }}:latest
+
+  update-gitops:
+    needs: [detect-changes, build-and-push]
+    if: needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update image tags
+        shell: bash
+        run: |
+          set -e
+
+          services='${{ needs.detect-changes.outputs.services }}'
+
+          for service in $(echo "$services" | jq -r '.[]'); do
+            echo "Updating $service to ${GITHUB_SHA}"
+
+            sed -i "/name: $service/{n;n;s/newTag: .*/newTag: ${GITHUB_SHA}/;}" \
+              kubernetes/kustomization.yaml
+          done
+
+      - name: Commit and push GitOps changes
+        shell: bash
+        run: |
+          set -e
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add kubernetes/kustomization.yaml
+
+          git commit \
+            -m "gitops: update microservice image tags to ${GITHUB_SHA}" \
+            || exit 0
+
+          git push
