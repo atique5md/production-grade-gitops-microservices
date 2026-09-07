@@ -34,7 +34,7 @@ images:
 
   - name: cartservice
     newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/cartservice
-    newTag: latest
+    newTag: 36f3ae1d82d1657fa1b80d5fc0095899cfa36335
 
   - name: checkoutservice
     newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/checkoutservice
@@ -58,7 +58,7 @@ images:
 
   - name: paymentservice
     newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/paymentservice
-    newTag: latest
+    newTag: 36f3ae1d82d1657fa1b80d5fc0095899cfa36335
 
   - name: productcatalogservice
     newName: 703707151858.dkr.ecr.ap-south-1.amazonaws.com/production-grade-gitops/productcatalogservice
