@@ -112,14 +112,32 @@ jobs:
             echo "file=./src/${{ matrix.service }}/Dockerfile" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build and push Docker image
+      - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: ${{ steps.docker.outputs.context }}
           file: ${{ steps.docker.outputs.file }}
-          push: true
+          load: true
           tags: |
             ${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.service }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.service }}:latest
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd
+        with:
+          image-ref: ${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.service }}:${{ github.sha }}
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "0"
+
+      - name: Push Docker image to ECR
+        shell: bash
+        run: |
+          docker push \
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.service }}:${{ github.sha }}
+
+          docker push \
             ${{ env.ECR_REGISTRY }}/${{ env.ECR_PREFIX }}/${{ matrix.service }}:latest
 
   update-gitops:
