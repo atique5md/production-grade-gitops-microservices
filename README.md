@@ -1514,6 +1514,7 @@ kubectl get hpa frontend \
   -o jsonpath='{.metadata.annotations.argocd\.argoproj\.io/tracking-id}'; echo
 ```
 
+
 Expected format:
 
 ```text
